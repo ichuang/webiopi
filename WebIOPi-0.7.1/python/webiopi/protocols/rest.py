@@ -19,6 +19,7 @@ from webiopi.utils.version import BOARD_REVISION, VERSION_STRING, MAPPING
 from webiopi.devices import manager
 from webiopi.devices import instance
 from webiopi.devices.bus import BUSLIST
+import traceback
 
 try:
     import _webiopi.GPIO as GPIO
@@ -192,15 +193,19 @@ class RESTHandler():
                 value = ""
 
             if mname in self.macros:
-                macro = self.macros[mname]
+                try:
+                    macro = self.macros[mname]
 
-                if ',' in value:
-                    args = value.split(',')
-                    result = macro(*args)
-                elif len(value) > 0:
-                    result = macro(value)
-                else:
-                    result = macro()
+                    if ',' in value:
+                        args = value.split(',')
+                        result = macro(*args)
+                    elif len(value) > 0:
+                        result = macro(value)
+                    else:
+                        result = macro()
+                except Exception as err:
+                    logger.error("Failed to execute macro %s, value=%s, err=%s, traceback=%s" % (mname, value, err, traceback.format_exc()))
+                    result = "ERROR: %s" % str(err)
                      
                 response = ""
                 if result:
